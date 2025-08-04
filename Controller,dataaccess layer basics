@@ -1,0 +1,122 @@
+model:
+
+public class Employee{
+  public int Id{get; set;}
+  public string Name{get; set;}
+  public int Salary{get; set;}
+}
+
+Dal
+
+public class EmployeeDal{
+  private readonly string ConnectionString = "Server=servername; User Id=CN11213; Password=NASH";
+  public List<Employee> GetAllEmployees()
+  {
+    List<Employee> employee = new List<Employee>();
+    
+    using(SqlConnection con = new SqlConnection(ConnectionString))
+    {
+        SqlCommand sqlcom = new SqlCommand("Select * from Employee",con);
+        con.Open();
+        SqlDataReader rdr = sqlcom.ExecuteReader();
+        while(rdr.Read())
+        {
+          employee.Add(new Employee{
+            Id = Convert.ToInt32(rdr["Id"]),
+            Name = rdr["Name"].ToString(),
+            Salary = Convert.ToInt32(rdr["Salary"])
+          });
+        }
+    }
+    return employee;
+  }
+  public bool InsertEmployee(Employee employee){
+    using(SqlConnection con = new SqlConnection(ConnectionString))
+    {
+      var query = "Insert into Employee(Name,Salary) values(@Name,@Salary)";
+      SqlCommand sqlcmd = new SqlCommand(query,con);
+      sqlcmd.Parameters.AddWithValue("@Name",employee.Name);
+      sqlcmd.Parameters.AddWithValue("@Salary",employee.Salary);
+      con.Open();
+      int rdr = sqlcmd.ExecuteNonQuery();
+      if(rdr>0)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+  }
+  public bool UpdateEmployee(Employee employee){
+    using(SqlConnection con = new SqlConnection(ConnectionString))
+    {
+      var query = "Update Employee set Name = @Name, Salary = @Salary where Id = @Id";
+      SqlCommand cmd = new SqlCommand(query,con);
+      cmd.Parameters.AddWithValue("@Name",employee.Name);
+      cmd.Parameters.AddWithValue("@Salary",employee.Salary);
+      cmd.Parameters.AddWithValue("@Id",employee.Id);
+      con.Open();
+      int rowsaffected = cmd.ExecuteNonQuery();
+      return rowsaffected > 0;
+    }
+  }
+  public bool DeleteEmployee(int id){
+    using(SqlConnection con = new SqlConnection(ConnectionString))
+    {
+      var query = "Delete from Employee where Id = @Id";
+      SqlCommand cmd = new SqlCommand(query,con);
+      cmd.Parameters.AddWithValue("@Id",id);
+      con.Open();
+      int rowsaffected = cmd.ExecuteNonQuery();
+      return rowsaffected>0;
+    }
+  }
+}
+
+Controller
+[ApiController]
+[Route("api/[controller]")]
+public class EmployeeController:ControllerBase
+{
+  private readonly EmployeeDal _employeedal = new EmployeeDal();
+  [HttpGet("GetAll")]
+  public IActionResult GetAllEmployees(){
+    var result = _employeedal.GetAllEmployees();
+    return Ok(result);
+  }
+  [HttpPost("Add")]
+  public IActionResult InsertEmployees([FromBody] Employee emp){
+    bool result = _employeedal.InsertEmployee(emp);
+    if(result){
+      return Ok($"Inserted successfully - {emp.Id}");
+    }
+    else{
+      return NotFound("Not Inserted");
+    }
+  }
+  [HttpPut("update")]
+  public IActionResult UpdateEmployee([FromBody] Employee employee)
+  {
+    bool result = _employeedal.UpdateEmployee(employee);
+    if(result){
+      return Ok($"Updated successfully - {employee.Id}");
+    }
+    else{
+      return NotFound("Not updated");
+    }
+  }
+  [HttpDelete("delete/{id}")]
+  public IActionResult DeleteEmployee(int id)
+  {
+    bool result = _employeedal.DeleteEmployee(id);
+    if(result)
+    {
+      return Ok($"DELETED successfully - {id}");
+    }
+    else{
+      return NotFound("Not Deleted");
+    }
+  }
+}
