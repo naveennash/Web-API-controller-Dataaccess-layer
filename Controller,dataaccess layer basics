@@ -8,6 +8,10 @@ public class Employee{
 
 Dal
 
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+
 public class EmployeeDal{
   private readonly string ConnectionString = "Server=servername; User Id=CN11213; Password=NASH";
   public List<Employee> GetAllEmployees()
@@ -74,6 +78,8 @@ public class EmployeeDal{
     }
   }
 }
+
+using Microsoft.AspNetCore.Mvc;
 
 Controller
 [ApiController]
